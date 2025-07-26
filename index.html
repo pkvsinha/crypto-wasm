@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crypto WASM Tester</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        h1, h2 { border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+        input, button { font-size: 1rem; padding: 8px; margin-right: 8px; }
+        code, pre { background-color: #f4f4f4; padding: 4px 8px; border-radius: 4px; }
+        pre { white-space: pre-wrap; word-break: break-all; margin-top: 1rem; }
+        #status { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>Crypto WASM Tester</h1>
+    <p>A simple page to test the functions compiled in <strong>dist/crypto.wasm</strong>.</p>
+    <p>Status: <span id="status">WASM module not loaded...</span></p>
+
+    <hr>
+
+    <h2>SHA-256 Hasher</h2>
+    <input type="text" id="textToHash" value="Hello, WebAssembly!" size="40">
+    <button id="hashBtn" disabled>Generate Hash</button>
+    <p><strong>Result:</strong> <code id="hashResult"></code></p>
+
+    <hr>
+
+    <h2>RSA Key Pair Generator (2048-bit)</h2>
+    <button id="rsaBtn" disabled>Generate Keys</button>
+    <div id="rsaResult"></div>
+
+    <script src="./dist/crypto-wasm.js"></script>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const hashBtn = document.getElementById('hashBtn');
+        const rsaBtn = document.getElementById('rsaBtn');
+
+        // This is the global module object created by the Emscripten JS glue code.
+        // We pass it a configuration object to tell it where to find the .wasm file.
+        createCryptoModule({
+            // Help the module find its .wasm file relative to this HTML page
+            locateFile: (path) => {
+                if (path.endsWith('.wasm')) {
+                    return './dist/' + path;
+                }
+                return path;
+            }
+        }).then(module => {
+            // This 'module' object is our interface to the compiled C++ code.
+            window.WasmCrypto = module;
+
+            // Update UI now that the module is ready
+            statusEl.textContent = 'WASM module loaded successfully!';
+            statusEl.style.color = 'green';
+            hashBtn.disabled = false;
+            rsaBtn.disabled = false;
+        });
+
+        // --- Event Listeners ---
+
+        hashBtn.addEventListener('click', () => {
+            const text = document.getElementById('textToHash').value;
+            // Call the C++ 'sha256' function we exposed via Embind
+            const result = window.WasmCrypto.sha256(text);
+            document.getElementById('hashResult').textContent = result;
+        });
+
+        rsaBtn.addEventListener('click', () => {
+            const rsaResultEl = document.getElementById('rsaResult');
+            rsaResultEl.innerHTML = '<p>Generating...</p>';
+            
+            // Generate keys. This can take a moment, so we don't block the UI.
+            setTimeout(() => {
+                 // Call the C++ 'generateRsaKeyPair' function
+                const keyPair = window.WasmCrypto.generateRsaKeyPair();
+                
+                if (keyPair) {
+                    rsaResultEl.innerHTML = `
+                        <h3>Public Key:</h3>
+                        <pre>${keyPair.publicKey}</pre>
+                        <h3>Private Key:</h3>
+                        <pre>${keyPair.privateKey}</pre>
+                    `;
+                    // Free the memory used by the returned object
+                    keyPair.delete();
+                } else {
+                    rsaResultEl.innerHTML = '<p style="color: red;">Error generating keys.</p>';
+                }
+            }, 50); // Use a timeout to allow the "Generating..." message to render
+        });
+
+    </script>
+</body>
+</html>

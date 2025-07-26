@@ -1,0 +1,17 @@
+{
+  "name": "@pkvsinha/crypto-wasm",
+  "version": "0.0.1",
+  "description": "WASM browser library for common crypto operations using openSSL",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "dist/"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:openssl": "bash build_openssl.sh",
+    "build": "npm run build:openssl && bash build_wrapper.sh"
+  },
+  "author": "Prashant Sinha",
+  "license": "MIT"
+}
