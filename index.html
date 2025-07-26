@@ -84,8 +84,7 @@
                         <h3>Private Key:</h3>
                         <pre>${keyPair.privateKey}</pre>
                     `;
-                    // Free the memory used by the returned object
-                    keyPair.delete();
+                    
                 } else {
                     rsaResultEl.innerHTML = '<p style="color: red;">Error generating keys.</p>';
                 }

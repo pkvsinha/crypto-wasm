@@ -32,10 +32,10 @@ export async function generateRsaKeyPair() {
   if (!keyPair) {
     throw new Error("Failed to generate RSA key pair in WASM module.");
   }
+  console.log("Generated RSA key pair:", keyPair);
   const result = {
       privateKey: keyPair.privateKey,
       publicKey: keyPair.publicKey
   };
-  keyPair.delete(); // Free the emscripten::val object
   return result;
 }
